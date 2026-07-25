@@ -34,6 +34,7 @@ var uiTable *tview.Table
 var uiDevice string
 var uiFlex *tview.Flex
 var uiCmdBar *tview.Flex
+var isRunning = true // track capture state (running vs paused)
 
 func main() {
 	const rowLimit int = 200 // max amount of packets in history
@@ -61,10 +62,11 @@ func main() {
 
 	// define top bar (----- netinsto ----- thing)
 	table := tview.NewTable().SetSelectable(true, false)
+	table.SetBorder(true)
 	uiApp = tui
 	uiTable = table
 	uiDevice = device
-	table.SetBorder(true).SetTitle(fmt.Sprintf(" netinsto [%s] filter:%s ", device, filterProto))
+	updateTopTitle()
 
 	// set headers of tables
 	headers := []string{"No.", "Time", "Source", "Destination", "Protocol", "Length"}
@@ -119,6 +121,20 @@ func main() {
 			}
 			tui.Stop() // quit application otherwise
 		}
+		if !cmdOpen {
+			switch event.Key() {
+			case tcell.KeyF1: // F1 to start/resume capturing
+				startPacketCapture()
+				return nil
+			case tcell.KeyF2: // F2 to stop/pause capturing
+				pausePacketCapture()
+				return nil
+			}
+			if event.Rune() == 'q' || event.Rune() == 'Q' { // if a user enters q (lowercase or uppercase) then exit the program
+				tui.Stop()
+				return nil
+			}
+		}
 		if !cmdOpen && event.Rune() == ':' { // display menu if the ':' key is pressed and its not already open (like neovim)
 			openCmdBar(cmdBar)
 			return nil
@@ -146,6 +162,10 @@ func main() {
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 	go func() {
 		for packet := range packetSource.Packets() {
+			if !isRunning {
+				continue // skip packets if the capture is puased
+			}
+
 			_, _, proto := filterPacketType(packet)
 			if filterProto != "ALL" && proto != filterProto {
 				continue // if packets dont match the current filter, then dont show them
@@ -189,7 +209,7 @@ func main() {
 func openCmdBar(cmdBar *tview.Flex) {
 	cmdOpen = true // set cmdOpen to true so that the program knows the user has toggled the bar (in the case of an error)
 	cmdSel = 0
-	cmdInput.SetText("filter ") // i do plan to make this more than just filtering so this will be changed eventually
+	cmdInput.SetText("") // i do plan to make this more than just filtering so this will be changed eventually
 	cmdMenuAutocomplete()
 	uiFlex.AddItem(cmdBar, 3, 0, false) // 3 height because of the 'Command', textbox, and selection menu.
 	uiApp.SetFocus(cmdInput)
@@ -220,13 +240,50 @@ func cmdMenuAutocomplete() {
 
 // apply filtering via (:filter <proto>) or (:tcp for example)
 func applyCmd(text string) {
-	f := strings.TrimSpace(strings.TrimPrefix(text, "filter"))
+	cmd := strings.TrimSpace(strings.ToLower(text))
+	if cmd == "start" { // allow the user to start/resume packet capture with command bar
+		startPacketCapture()
+		return
+	}
+	if cmd == "stop" { // allow the user to stop/pause packet capture with command bar
+		pausePacketCapture()
+		return
+	}
+	if cmd == "q" || cmd == "quit" { // if a user enters q or quit in the command bar then quit program
+		if uiApp != nil {
+			uiApp.Stop()
+		}
+		return
+	}
+
+	f := strings.TrimSpace(strings.TrimPrefix(text, "f"))
 	f = strings.ToUpper(f)
 	if slices.Contains(protos, f) {
 		filterProto = f
-		uiTable.SetTitle(fmt.Sprintf(" netinsto [%s] filter:%s ", uiDevice, filterProto))
+		updateTopTitle() // call function instead of repeating code over and over
 		return
 	}
+}
+
+func updateTopTitle() {
+	if uiTable != nil {
+		// make running show green and paused show red at the top of the program to indicate packet capture state
+		status := "[green][RUNNING[][-]"
+		if !isRunning {
+			status = "[red][PAUSED[][-]"
+		}
+		uiTable.SetTitle(fmt.Sprintf(" netinsto [%s[] %s filter:%s ", uiDevice, status, filterProto))
+	}
+}
+
+func pausePacketCapture() {
+	isRunning = false
+	updateTopTitle()
+}
+
+func startPacketCapture() {
+	isRunning = true
+	updateTopTitle()
 }
 
 // filter packet/protocol type
