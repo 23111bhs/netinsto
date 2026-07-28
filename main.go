@@ -256,6 +256,24 @@ func applyCmd(text string) {
 		return
 	}
 
+	// add save/export command so that a user can save their capture to a
+	if strings.HasPrefix(cmd, "save ") || strings.HasPrefix(cmd, "export ") {
+		parts := strings.SplitN(text, " ", 2)
+		if len(parts) < 2 || strings.TrimSpace(parts[1]) == "" { // check if the user entered a filename or not
+			cmdHint.SetText("[red]Error: Choose a filename (For example, :save capture.pcap)[-]")
+			return
+		}
+		filename := strings.TrimSpace(parts[1]) // get the filename from user's input and trim spaces
+
+		err := saveSessionToPcap(filename)
+		if err != nil {
+			cmdHint.SetText(fmt.Sprintf("[red]Failed to export: %v[-]", err))
+		} else {
+			cmdHint.SetText(fmt.Sprintf("[green]Successfully exported %d packets to %s[-]", len(packetCache), filename))
+		}
+		return
+	}
+
 	f := strings.TrimSpace(strings.TrimPrefix(text, "f"))
 	f = strings.ToUpper(f)
 	if slices.Contains(protos, f) {
@@ -284,35 +302,6 @@ func pausePacketCapture() {
 func startPacketCapture() {
 	isRunning = true
 	updateTopTitle()
-}
-
-// filter packet/protocol type
-func filterPacketType(packet gopacket.Packet) (string, string, string) {
-	// if the packet is malformed/unrecognizable then give it the below names so that they dont show as blank
-	src, dst, proto := "N/A", "N/A", "Other"
-
-	// get destination and source IP address
-	if ipLayer := packet.Layer(layers.LayerTypeIPv4); ipLayer != nil {
-		ip, _ := ipLayer.(*layers.IPv4)
-		src = ip.SrcIP.String()
-		dst = ip.DstIP.String()
-	}
-
-	// check protocol
-	if packet.Layer(layers.LayerTypeTCP) != nil {
-		proto = "TCP"
-	} else if packet.Layer(layers.LayerTypeUDP) != nil {
-		proto = "UDP"
-	} else if packet.Layer(layers.LayerTypeICMPv4) != nil || packet.Layer(layers.LayerTypeICMPv6) != nil {
-		proto = "ICMP"
-	} else if packet.Layer(layers.LayerTypeARP) != nil {
-		proto = "ARP"
-	} else if packet.Layer(layers.LayerTypeDNS) != nil {
-		proto = "DNS"
-	}
-
-	// return source IP, destination IP, and protocol of packet.
-	return src, dst, proto
 }
 
 // define details field at the bottom half of the program.
