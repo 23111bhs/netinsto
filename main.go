@@ -256,6 +256,24 @@ func applyCmd(text string) {
 		return
 	}
 
+	// add save/export command so that a user can save their capture to a
+	if strings.HasPrefix(cmd, "save ") || strings.HasPrefix(cmd, "export ") {
+		parts := strings.SplitN(text, " ", 2)
+		if len(parts) < 2 || strings.TrimSpace(parts[1]) == "" {
+			cmdHint.SetText("[red]Error: Choose a filename (For example, :save capture.pcap)[-]")
+			return
+		}
+		filename := strings.TrimSpace(parts[1])
+
+		err := savePacketsToPcap(filename)
+		if err != nil {
+			cmdHint.SetText(fmt.Sprintf("[red]Failed to export: %v[-]", err))
+		} else {
+			cmdHint.SetText(fmt.Sprintf("[green]Successfully exported %d packets to %s[-]", len(packetCache), filename))
+		}
+		return
+	}
+
 	f := strings.TrimSpace(strings.TrimPrefix(text, "f"))
 	f = strings.ToUpper(f)
 	if slices.Contains(protos, f) {

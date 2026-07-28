@@ -7,6 +7,8 @@ require (
 	github.com/google/gopacket v1.1.19
 )
 
+require golang.org/x/net v0.6.0 // indirect
+
 require (
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
