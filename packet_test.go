@@ -12,8 +12,9 @@ import (
 func TestTCPTypePacket(test *testing.T) {
 
 	ip := &layers.IPv4{
-		SrcIP: []byte{192, 168, 1, 20}, // and a local IPv4 address to match this
-		DstIP: []byte{8, 8, 8, 8},      // google's dns as this is purely theoretical
+		SrcIP:    []byte{192, 168, 1, 20}, // and a local IPv4 address to match this
+		DstIP:    []byte{8, 8, 8, 8},      // google's dns as this is purely theoretical
+		Protocol: layers.IPProtocolTCP,    // set protocol to TCP
 	}
 
 	tcp := &layers.TCP{
@@ -25,7 +26,9 @@ func TestTCPTypePacket(test *testing.T) {
 
 	err := gopacket.SerializeLayers( // formatting
 		buffer,
-		gopacket.SerializeOptions{},
+		gopacket.SerializeOptions{
+			FixLengths: true, // calculate packet length
+		},
 		ip,
 		tcp,
 	)
