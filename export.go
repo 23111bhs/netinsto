@@ -8,8 +8,8 @@ import (
 	"github.com/google/gopacket/pcapgo"
 )
 
-// savePacketsToPcap writes all currently cached packets to a .pcap file
-func savePacketsToPcap(filename string) error {
+// saveSessionToPcap writes all currently cached packets to a .pcap file
+func saveSessionToPcap(filename string) error {
 	if !strings.HasSuffix(filename, ".pcap") {
 		filename += ".pcap"
 	}

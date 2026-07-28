@@ -259,13 +259,13 @@ func applyCmd(text string) {
 	// add save/export command so that a user can save their capture to a
 	if strings.HasPrefix(cmd, "save ") || strings.HasPrefix(cmd, "export ") {
 		parts := strings.SplitN(text, " ", 2)
-		if len(parts) < 2 || strings.TrimSpace(parts[1]) == "" {
+		if len(parts) < 2 || strings.TrimSpace(parts[1]) == "" { // check if the user entered a filename or not
 			cmdHint.SetText("[red]Error: Choose a filename (For example, :save capture.pcap)[-]")
 			return
 		}
-		filename := strings.TrimSpace(parts[1])
+		filename := strings.TrimSpace(parts[1]) // get the filename from user's input and trim spaces
 
-		err := savePacketsToPcap(filename)
+		err := saveSessionToPcap(filename)
 		if err != nil {
 			cmdHint.SetText(fmt.Sprintf("[red]Failed to export: %v[-]", err))
 		} else {
