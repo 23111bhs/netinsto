@@ -23,9 +23,9 @@ var packetCache = make(map[int]gopacket.Packet)
 var packetCount = 0
 
 // note: i do plan to put this into different files eventually, but during the early development stage its easier to put them here.
-var filterProto = "ALL"                                          // protocol filter: ALL/TCP/UDP/ICMP/ARP/DNS
-var protos = []string{"ALL", "TCP", "UDP", "ICMP", "ARP", "DNS"} // list of every available filtering protocol
-var cmdOpen bool                                                 // t/f value to check if the cmdmenu is open or not
+var filterProto = "ALL"                                                              // protocol filter: ALL/TCP/UDP/ICMP/ARP/DNS/SSDP/ieee1905
+var protos = []string{"ALL", "TCP", "UDP", "ICMP", "ARP", "DNS", "SSDP", "ieee1905"} // list of every available filtering protocol
+var cmdOpen bool                                                                     // t/f value to check if the cmdmenu is open or not
 var cmdSel int
 var cmdInput *tview.InputField
 var cmdHint *tview.TextView
