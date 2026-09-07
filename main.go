@@ -81,10 +81,10 @@ func main() {
 		tui.Draw() // if the packet info updates, redraw the info
 	})
 	detailView.SetBorder(true).SetTitle(" Packet Details ")
-	detailView.SetText("Select a packet above to inspect its layers...")
+	detailView.SetText("Select a packet above using enter to inspect its layers...")
 
 	// allow a user to select a field/packet
-	table.SetSelectionChangedFunc(func(row, column int) {
+	table.SetSelectedFunc(func(row, column int) {
 		if row == 0 { // skip the row with the header in it
 			return
 		}
